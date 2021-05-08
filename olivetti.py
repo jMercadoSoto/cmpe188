@@ -12,6 +12,8 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
+from sklearn.metrics import mean_squared_error
+
 
 #load data
 data=np.load("./input/olivetti_faces.npy")
@@ -49,6 +51,10 @@ plt.xlabel('Components')
 plt.ylabel('Explained Variances')
 plt.show()
 
+#below is hat gets added to the model_metrics array
+#model_metrics = ['Classifier', 'Precision', 'Recall', 'F1 Score', 'AUROC', 'RMSE']
+#model_metrics = ['Classifier', 'Precision', 'Recall', 'F1 Score', 'RMSE']
+model_metrics = []
 
 #KNN different K values
 print("\nTraining KNN for different K values")
@@ -73,7 +79,7 @@ for name, model in knn_models:
     plt.title("{} heat map without PCA".format(name).upper())
     plt.xlabel("Predicted label")
     plt.ylabel("True label")
-    plt.show() #UNCOMMENT TO SHOW PLOTS
+    plt.show()
 
 
 #visualize the performance of KNN models with different K value
@@ -110,12 +116,14 @@ for name, model in models:
     print("##############################")
     print("{} Accuracy score:{:0.2f}".format(name, metrics.accuracy_score(y_test, y_pred)))
     models_scores.append(metrics.accuracy_score(y_test, y_pred))
+    #model_metrics.append([name, metrics.precision_score(y_test, y_pred, average='weighted'), metrics.recall_score(y_test, y_pred, average='weighted'), metrics.f1_score(y_test, y_pred, average='weighted'), metrics.roc_auc_score(y_test, y_pred, multi_class='ovr'), mean_squared_error(y_test, y_pred)])
+    model_metrics.append([name, metrics.precision_score(y_test, y_pred, average='weighted'), metrics.recall_score(y_test, y_pred, average='weighted'), metrics.f1_score(y_test, y_pred, average='weighted'), mean_squared_error(y_test, y_pred)])
     plt.figure(1, figsize=(8,8))
     sns.heatmap(metrics.confusion_matrix(y_test, y_pred))
     plt.title("{} heat map without PCA".format(name).upper())
     plt.xlabel("Predicted label")
     plt.ylabel("True label")
-    plt.show() #UNCOMMENT TO SHOW PLOT
+    plt.show()
 
 plt.figure(1, figsize=(8,8))
 plt.bar([name for name,model in models], models_scores, align='center')
@@ -124,4 +132,12 @@ plt.xticks([name for name,model in models])
 plt.ylabel("Performance")
 for index, value in enumerate(models_scores):
     plt.text(index, value, "%.2f" % value)
-plt.show()
+#plt.show()
+
+#metrics printout
+#columns = ['Classifier', 'Precision', 'Recall', 'F1 Score', 'AUROC, ''RMSE']
+columns = ['Classifier', 'Precision', 'Recall', 'F1 Score', 'RMSE']
+print('\n{:<10}  {:>10}  {:>10}  {:>10}  {:>10}'.format(*columns))
+for row in model_metrics:
+    #print(row)
+    print('{:<10}  {:>10.3f}  {:>10.3f}  {:>10.3f}  {:>10.3f}'.format(*row))
