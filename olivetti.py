@@ -1,3 +1,5 @@
+import re # regex
+
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
@@ -37,12 +39,43 @@ def compare_KNN(models):
         plt.ylabel("True label")
         plt.show()
 
-
-
     #visualize the performance of KNN models with different K value
     plt.figure(1, figsize=(8,8))
     plt.bar([name for name,model in models], model_metrics, align='center')
     plt.title("KNN performance for different K values")
+    plt.xticks([name for name,model in models])
+    plt.ylabel("Performance")
+    for index, value in enumerate(model_metrics):
+        plt.text(index, value, "%.2f" % value)
+    plt.show()
+
+    return model_metrics
+
+def compare_RF(models):
+    model_metrics = []
+
+    for name, model in models:
+
+        clf=model
+
+        clf.fit(X_train, y_train)
+        y_pred=clf.predict(X_test)
+
+        print("##############################")
+        print("{} Accuracy score:{:0.2f}".format(name, metrics.accuracy_score(y_test, y_pred)))
+        model_metrics.append(metrics.accuracy_score(y_test, y_pred))
+
+        plt.figure(1, figsize=(8,8))
+        sns.heatmap(metrics.confusion_matrix(y_test, y_pred))
+        plt.title("{} heat map without PCA".format(name).upper())
+        plt.xlabel("Predicted label")
+        plt.ylabel("True label")
+        plt.show()
+        
+    #visualize the performance of KNN models with different K value
+    plt.figure(1, figsize=(8,8))
+    plt.bar([name for name,model in models], model_metrics, align='center')
+    plt.title("Random Forest performance for different # of trees")
     plt.xticks([name for name,model in models])
     plt.ylabel("Performance")
     for index, value in enumerate(model_metrics):
@@ -192,7 +225,25 @@ if __name__ == '__main__':
     max_knn_score = max(knn_models_scores)
     max_knn_score_index = knn_models_scores.index(max_knn_score)
     max_knn_score_k_value = knn_models[max_knn_score_index][0][0] #as a STRING
+    
+    #Random Forest with different # of trees
+    print("\nTraining Random Forest for different # of trees")
+    rf_models=[]
+    rf_models.append(("1T-RF", RandomForestClassifier(n_estimators=1, random_state=0)))
+    rf_models.append(("10T-RF", RandomForestClassifier(n_estimators=10, random_state=0)))
+    rf_models.append(("20T-RF", RandomForestClassifier(n_estimators=20, random_state=0)))
+    rf_models.append(("40T-RF", RandomForestClassifier(n_estimators=40, random_state=0)))
+    rf_models.append(("80T-RF", RandomForestClassifier(n_estimators=80, random_state=0)))
+    rf_models.append(("160T-RF", RandomForestClassifier(n_estimators=160, random_state=0)))
+    rf_models.append(("320T-RF", RandomForestClassifier(n_estimators=320, random_state=0)))
 
+    rf_models_scores = compare_RF(rf_models)
+
+    max_rf_score = max(rf_models_scores)
+    max_rf_score_index = rf_models_scores.index(max_rf_score)
+    max_rf_score_k_value = re.sub("[^0-9]", "", rf_models[max_rf_score_index][0]) #as a STRING 
+
+   
 
     #machine learning models
     print("\nTraining different machine learning models")
@@ -202,7 +253,7 @@ if __name__ == '__main__':
     models.append(("KNN w/K={}".format(max_knn_score_k_value),KNeighborsClassifier(n_neighbors=int(max_knn_score_k_value))))
     models.append(("DT",DecisionTreeClassifier()))
     models.append(("SVM",SVC()))
-    models.append(("RF",RandomForestClassifier(n_estimators=64, random_state=0)))
+    models.append(("RF w/N={}".format(max_rf_score_k_value),RandomForestClassifier(n_estimators=int(max_rf_score_k_value), random_state=0)))
 
     models_scores = compare_models(models)
     columns = ['Classifier', 'Precision', 'Recall', 'F1 Score', 'RMSE']
